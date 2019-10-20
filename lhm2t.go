@@ -3,15 +3,44 @@ package main
 import (
 	"io/ioutil"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 )
 
+var stdin = flag.Bool("i", false, "Get input from stdin instead of url")
+
 func main() {
-	sensor_json, err := ioutil.ReadAll(os.Stdin)
+	flag.Usage = func() {
+		fmt.Printf(
+`Usage:
+    %s -i
+    %s [<URL>]
+
+Options:
+`, path.Base(os.Args[0]), path.Base(os.Args[0]))
+		flag.PrintDefaults()
+	}
+	flag.Parse()
+	var sensor_json []byte
+	var err error
+	if *stdin {
+		sensor_json, err = ioutil.ReadAll(os.Stdin)
+	} else {
+		url := "http://localhost:8085/data.json"
+		if flag.NArg() == 1 {
+			url = flag.Arg(0)
+		}
+		resp, err := http.Get(url)
+		if err != nil { log.Fatal(err) }
+		defer resp.Body.Close()
+		sensor_json, err = ioutil.ReadAll(resp.Body)
+	}
 	if err != nil { log.Fatal(err) }
 
 	var tree map[string]interface{}
