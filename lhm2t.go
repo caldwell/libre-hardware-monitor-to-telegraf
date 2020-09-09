@@ -54,7 +54,11 @@ Options:
 		for k, v := range(s.Tag) {
 			tags = tags + fmt.Sprintf(",%s=%s", badchars.ReplaceAllLiteralString(k, "_"), badchars.ReplaceAllLiteralString(v, "_"))
 		}
-		fmt.Printf("%s%s %s_%s=%s\n", badchars.ReplaceAllLiteralString(s.Measurement, "_"), tags, badchars.ReplaceAllLiteralString(s.Field, "_"), badchars.ReplaceAllLiteralString(s.Unit, "_"), s.Value)
+		field_unit := badchars.ReplaceAllLiteralString(s.Field, "_")
+		if s.Unit != nil {
+			field_unit += "_" + badchars.ReplaceAllLiteralString(*s.Unit, "_")
+		}
+		fmt.Printf("%s%s %s=%s\n", badchars.ReplaceAllLiteralString(s.Measurement, "_"), tags, field_unit, s.Value)
 	}
 }
 
@@ -62,12 +66,16 @@ type Sensor struct {
 	Measurement string
 	Field string
 	Value string
-	Unit string
+	Unit *string
 	Tag map[string]string
 }
 
 func parse_sensor(node map[string]interface{}, path []string) Sensor {
 	v := strings.SplitN(node["Value"].(string), " ", 2)
+	var unit *string
+	if len(v) > 1 {
+		unit = &v[1]
+	}
 	tag := make(map[string]string)
 	if m := regexp.MustCompile(`^(.*) #(\d+)$`).FindStringSubmatch(path[len(path)-1]); m != nil {
 		tag[m[1]] = m[2]
@@ -77,7 +85,7 @@ func parse_sensor(node map[string]interface{}, path []string) Sensor {
 	return Sensor{
 		Tag: tag,
 		Value: v[0],
-		Unit: v[1],
+		Unit: unit,
 		Measurement: strings.Join(path[2:len(path)-1], "."),
 		Field: path[len(path)-1],
 	}
