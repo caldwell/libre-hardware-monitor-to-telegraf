@@ -8,14 +8,23 @@ converts it into [InfluxDB input line format][3].
 [2]: http://localhost:8085/data.json
 [3]: https://docs.influxdata.com/influxdb/v1.7/write_protocols/line_protocol_tutorial/
 
-I hooked into Telegraf thusly:
+I hook into Telegraf thusly:
 
     [[inputs.exec]]
       commands = [
-        '''PowerShell -Command "(Invoke-WebRequest -UseBasicParsing -Uri 'http://localhost:8085/data.json').Content | & \"C:\Program Files\Telegraf\libre-hardware-monitor-to-telegraf.exe\"" '''
+         '''"C:\Program Files\Telegraf\libre-hardware-monitor-to-telegraf.exe"'''
       ]
       timeout = "5s"
       data_format = "influx"
+
+Building
+--------
+
+    go build
+
+## Cross Compiling
+
+    make
 
 Copyright and License
 ---------------------
